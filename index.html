@@ -1,741 +1,810 @@
-<style>
-  @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css");
-  @import url("https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&display=swap");
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
 
-  body {
-    font-family: "League Spartan", sans-serif;
-  }
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
-  }
-  .timer {
-    height: 2px;
-    background: red;
-    width: 0%;
-  }
-  .fa-pause {
-    display: none;
-  }
-  .gallery-item {
-    cursor: pointer;
-    overflow: hidden;
-    background: #111;
-  }
-  .captionName {
-    font-size: 16px;
-    display: flex;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: grayscale(100%);
-    transition: all 0.3s ease;
-    aspect-ratio: 1/1;
-  }
+    <style>
+      @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css");
+      @import url("https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&display=swap");
 
-  .gallery-item:hover img {
-    transform: scale(1.05);
-    filter: grayscale(0%);
-  }
+      body {
+        font-family: "League Spartan", sans-serif;
+      }
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+      }
+      .timer {
+        height: 2px;
+        background: red;
+        width: 0%;
+      }
+      .fa-pause {
+        display: none;
+      }
+      .gallery-item {
+        cursor: pointer;
+        overflow: hidden;
+        background: #111;
+      }
+      .captionName {
+        font-size: 16px;
+        display: flex;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%);
+        transition: all 0.3s ease;
+        aspect-ratio: 1/1;
+      }
 
-  /* ====== MODAL ====== */
-  .gallery-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: none;
-  }
-  .right-controls {
-    display: flex;
-    background: rgba(30, 30, 30, 0.6);
-    gap: 20px;
-    padding: 10px;
-  }
-  .right-controls i {
-    font-size: 16px;
-    cursor: pointer;
-  }
-  #thumbToggle {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    cursor: pointer;
-  }
-  #thumbToggle > div {
-    width: 4px;
-    height: 4px;
-    background: #eee;
-  }
-  .gallery-modal.active {
-    display: flex;
-  }
+      .gallery-item:hover img {
+        transform: scale(1.05);
+        filter: grayscale(0%);
+      }
 
-  .gallery-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.8);
-  }
+      .gallery-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        opacity: 0;
+        top: 100%;
+        transition: all 0.3s ease;
+      }
 
-  /* ====== MODAL CONTENT ====== */
-  .modal-content {
-    position: relative;
-    display: flex;
-    color: #fff;
-    flex-direction: column;
-    height: 100vh;
-    width: 100%;
-  }
+      .imageContainer {
+        display: flex;
+        flex-direction: column;
+      }
 
-  .control-bar {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-    z-index: 99999;
-  }
+      .right-controls {
+        display: flex;
+        background: rgba(30, 30, 30, 0.6);
+        gap: 20px;
+        padding: 10px;
+      }
+      .right-controls i {
+        font-size: 16px;
+        cursor: pointer;
+      }
+      #thumbToggle {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        cursor: pointer;
+      }
+      #thumbToggle > div {
+        width: 4px;
+        height: 4px;
+        background: #eee;
+      }
+      .gallery-modal.active {
+        opacity: 1;
+        top: 0;
+      }
+      #prevBtn,
+      #nextBtn {
+        z-index: 999;
+      }
+      .gallery-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+      }
 
-  .main-image-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
+      .modal-content {
+        position: relative;
+        display: flex;
+        color: #fff;
+        flex-direction: column;
+        height: 100vh;
+        width: 100%;
+      }
 
-  .main-image.zoomed {
-    transform: scale(2); /* adjust zoom level here */
-  }
-  .main-image.grabbing {
-    cursor: grabbing;
-  }
-  .main-image:hover {
-    cursor: grab;
-  }
+      .control-bar {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between;
+        z-index: 99999;
+        padding: 0 0 0 10px;
+      }
 
-  .main-image {
-    max-height: 90vh;
-    object-fit: contain;
-    width: 100%;
-    transition: transform 0.25s ease;
-    touch-action: none;
-  }
+      .main-image-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 10px;
+      }
 
-  /* ====== CAPTION ====== */
-  .caption {
-    text-align: center;
-    max-width: 800px;
-    padding: 75px 40px 25px;
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    /* background: linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.85) 0px,
-      rgba(0, 0, 0, 0.3) 50%,
-      rgba(0, 0, 0, 0.15) 65%,
-      rgba(0, 0, 0, 0.075) 75.5%,
-      rgba(0, 0, 0, 0.035) 82.85%,
-      rgba(0, 0, 0, 0.02) 88%,
-      transparent
-    );*/
-  }
+      .main-image.grabbing {
+        cursor: grabbing;
+      }
+      .main-image:hover {
+        cursor: grab;
+      }
 
-  .caption h3 {
-    margin: 0;
-    font-weight: 600;
-    line-height: 1.2;
-  }
+      .main-image {
+        object-fit: contain;
+        max-width: 100%;
+        transition: transform 0.25s ease;
+        touch-action: none;
+      }
+      .caption-mobile {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translate(-50%);
+        display: none;
+        max-width: calc(100% - 40px);
+      }
+      .caption-mobile,
+      .caption {
+        text-align: center;
+        max-width: 800px;
+        width: 100%;
+        background: linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.85) 0px,
+          rgba(0, 0, 0, 0.3) 50%,
+          rgba(0, 0, 0, 0.15) 65%,
+          rgba(0, 0, 0, 0.075) 75.5%,
+          rgba(0, 0, 0, 0.035) 82.85%,
+          rgba(0, 0, 0, 0.02) 88%,
+          transparent
+        );
+      }
+      .caption {
+        margin-top: 20px;
+      }
+      .caption h3 {
+        margin: 0;
+        font-weight: 600;
+        line-height: 1.2;
+      }
 
-  .caption h3,
-  .caption .story {
-    font-size: 16px;
-    line-height: 19.2px;
-    color: #eee;
-  }
+      .caption h3,
+      .caption .story {
+        font-size: 16px;
+        line-height: 19.2px;
+        color: #eee;
+      }
 
-  /* ====== CONTROLS ====== */
-  .control {
-    background: rgba(0, 0, 0, 0.6);
-    border: none;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 6px;
-  }
+      .control {
+        background: rgba(0, 0, 0, 0.6);
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 6px;
+      }
 
-  .prev {
-    left: -60px;
-  }
-  .next {
-    right: -60px;
-  }
+      .prev {
+        left: -60px;
+      }
+      .next {
+        right: -60px;
+      }
 
-  .close {
-  }
+      .thumbnail-panel {
+        max-height: 100vh;
+        width: 0;
+        gap: 2px;
+        background: rgb(0, 0, 0, 0.3);
+        overflow-y: auto;
+        display: grid;
+        z-index: 10000;
+        grid-template-columns: repeat(2, 1fr);
+        overflow-x: hidden;
+        padding: 2px 2px 20px;
+        opacity: 0;
+        transition: all 0.3s;
+        transform: translateX(300px);
+      }
 
-  .thumb-toggle {
-  }
+      .thumbnail-panel::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
 
-  /* ====== THUMBNAILS ====== */
-  .thumbnail-panel {
-    max-height: 100vh;
-    min-width: 208px;
-    gap: 2px;
-    background: rgb(0, 0, 0, 0.3);
-    overflow-y: auto;
-    display: none;
-    z-index: 10000;
-    grid-template-columns: repeat(2, 1fr);
-    overflow-x: hidden;
-    padding: 2px 2px 20px;
-  }
+      .thumbnail-panel::-webkit-scrollbar-track {
+        background: black;
+        border-radius: 10px;
+      }
 
-  .thumbnail-panel::-webkit-scrollbar {
-    width: 8px; /* vertical */
-    height: 8px; /* horizontal */
-  }
+      .thumbnail-panel::-webkit-scrollbar-thumb {
+        background: grey;
+        border-radius: 10px;
+      }
 
-  .thumbnail-panel::-webkit-scrollbar-track {
-    background: black;
-    border-radius: 10px;
-  }
+      .thumbnail-panel::-webkit-scrollbar-thumb:hover {
+        background: rgb(55, 54, 54);
+      }
 
-  .thumbnail-panel::-webkit-scrollbar-thumb {
-    background: grey;
-    border-radius: 10px;
-  }
+      .thumbnail-panel.active {
+        opacity: 1;
+        transform: translateX(0);
+        min-width: 208px;
+      }
 
-  .thumbnail-panel::-webkit-scrollbar-thumb:hover {
-    background: rgb(55, 54, 54);
-  }
+      .thumbnail {
+        overflow: hidden;
+        cursor: pointer;
+        width: 100px;
+        height: 75px;
+      }
 
-  .thumbnail-panel.active {
-    display: grid;
-  }
+      .thumbnail img {
+        width: 100%;
+        object-fit: cover;
+      }
 
-  .thumbnail {
-    overflow: hidden;
-    cursor: pointer;
-    width: 100px;
-    height: 75px;
-  }
+      @media (max-width: 768px) {
+        .modal-content {
+          flex-direction: column;
+          align-items: center;
+        }
 
-  .thumbnail img {
-    width: 100%;
-    object-fit: cover;
-  }
+        .thumbnail-panel {
+          grid-template-columns: repeat(1, 1fr);
+          transform: translateX(200px);
+        }
+        .thumbnail-panel.active {
+          min-width: 104px;
+        }
+        .caption h3,
+        .caption .story {
+          font-size: 14px;
+          line-height: 16px;
+        }
+        .captionName {
+          margin-bottom: 8px;
+        }
+        .caption-mobile {
+          display: block;
+        }
+        .caption {
+          margin-top: 15px;
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="gallery-grid" id="galleryGrid"></div>
 
-  /* ====== MOBILE ====== */
-  @media (max-width: 768px) {
-    .modal-content {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-</style>
+    <div class="gallery-modal" id="galleryModal">
+      <div class="gallery-overlay"></div>
 
-<div class="gallery-grid" id="galleryGrid"></div>
-
-<!-- ===== MODAL ===== -->
-<div class="gallery-modal" id="galleryModal">
-  <div class="gallery-overlay"></div>
-
-  <div class="modal-content">
-    <div class="timer"></div>
-    <div class="control-bar">
-      <div class="counter"></div>
-      <div class="right-controls">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <i class="fa-solid fa-play"></i>
-        <i class="fa-solid fa-pause"></i>
-        <i class="fa-solid fa-x" id="closeBtn"></i>
-        <div id="thumbToggle">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
+      <div class="modal-content">
+        <div class="timer"></div>
+        <div class="control-bar">
+          <div class="counter"></div>
+          <div class="right-controls">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <i class="fa-solid fa-play"></i>
+            <i class="fa-solid fa-pause"></i>
+            <i class="fa-solid fa-x" id="closeBtn"></i>
+            <div id="thumbToggle">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+        <div class="main-image-wrapper">
+          <button class="control prev" id="prevBtn">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div class="imageContainer">
+            <img class="main-image" id="mainImage" src="" alt="" />
+            <div class="caption">
+              <div class="captionName">
+                <h3 id="captionNameDesktop"></h3>
+                <div class="ig" id="captionIgDesktop"></div>
+              </div>
+              <div class="story" id="captionStoryDesktop"></div>
+            </div>
+          </div>
+          <div class="caption-mobile">
+            <div class="captionName">
+              <h3 id="captionName"></h3>
+              <div class="ig" id="captionIg"></div>
+            </div>
+            <div class="story" id="captionStory"></div>
+          </div>
+          <button class="control next" id="nextBtn">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
         </div>
       </div>
-    </div>
-    <div class="main-image-wrapper">
-      <button class="control prev" id="prevBtn">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <img class="main-image" id="mainImage" src="" alt="" />
-      <button class="control next" id="nextBtn">
-        <i class="fa-solid fa-arrow-right"></i>
-      </button>
+      <div class="thumbnail-panel" id="thumbnailPanel"></div>
     </div>
 
-    <div class="caption">
-      <div class="captionName">
-        <h3 id="captionName"></h3>
-        <div class="ig" id="captionIg"></div>
-      </div>
-      <div class="story" id="captionStory"></div>
-    </div>
-  </div>
-  <div class="thumbnail-panel" id="thumbnailPanel"></div>
-</div>
-
-<script>
-  const galleryData = [
-    {
-      image: "/VetInk Gallery/Lane Harris 1.jpg",
-
-      name: "Lane Harris 1",
-      instagram: "",
-      story:
-        "Lane says this is a tattoo that was created for remembrance of those who he's served with and have fallen both inside and outside of the military, specifically a gentleman named lane Harris, for the battle cross.",
-    },
-    {
-      image: "/VetInk Gallery/Lane Harris 2.jpg",
-
-      name: "Lane Harris 2",
-      instagram: "",
-      story:
-        "Lane says 'the eagles head is to resemble a multitude of things, from staying sharp, to patriotic, to majestic. The uncle Sam’s skull is in reference to dying for what America stands for in the traditional sense. Freedom from government and being free people. Then design around the eagles head is more or less a design feature to tie them all together.'",
-    },
-    {
-      image: "/VetInk Gallery/Lane Harris 3.jpg",
-
-      name: "Lane Harris 3",
-      instagram: "",
-      story:
-        "'I got my Eagle Globe and Anchor tattoo to remind me of my pride and the accomplishment from the first time I put on that uniform until I die. It’s an honor and a privilege to be a Marine! I cherish the brotherhood wherever I go and it’s a special moment to run into another Marine that you never met before and when they see this tattoo we instantly know we are brothers because we are cut from the same blood oath that brings us all altogether. SFMF’s'",
-    },
-    {
-      image: "/VetInk Gallery/Justin Brant.jpg",
-
-      name: "Justin Brant",
-      instagram: "@jab_trd_socal",
-      story:
-        "Justin Brant says after joining the Marines back in 2001, he got his first tattoo in MOS school. He says it was cool as a young one…but he didn’t really like it and after a few years he ended up covering it up. A few year later he had some laser tattoo removal sessions to lighten the double tattoo. In the meantime, him and San Diego tattoo artist (IG: @terryribera) sat down and planned the tattoo out. 'He actually texted me a few weeks later before the first appointment and had changed the design to something more in your face and dynamic. I was in love with the design! At this point in my career I had been on 7 deployments and seen over 30 countries with just about 16-17 years in service. 3 sessions later I was so proud to wear this new ink from Terry that represents who I am. I fully believe that even long after the military I’ll still be a Marine and hold that true.”",
-    },
-    {
-      image: "/VetInk Gallery/Casey Wieckowski.jpg",
-
-      name: "Casey Wieckowski",
-      instagram: "@afflfdvictoryvhcfitec2309",
-      story:
-        "Casey says he got the the flag as a back drop because he loves this country and is proud to have served. The Statue of Liberty with a have skull face is for liberty or death. The soldiers grave is for all his fallen brothers and sisters, and Saint Michael the protector because he is the patron saint of the Air Force and first responders, 'me being a former Air Force firefighter. I also have we the people on this arm, 3 percenter, firefighter cross, Spartan helmet, and come take them in Greek.'",
-    },
-    {
-      image: "/VetInk Gallery/Jordan Leitsch.jpg",
-
-      name: "Jordan Leitsch",
-      instagram: "@onelegwonder0311",
-      story:
-        "Jordan, a USMC Veteran, says he got the American flag sleeve a few weeks after he found out he would be losing his leg from his in-service injuries. He says it was a way to motivate himself and keep pushing forward.",
-    },
-    {
-      image: "/VetInk Gallery/Chris 2.jpg",
-
-      name: "Chris",
-      instagram: "",
-      story:
-        "'I am a 100% SC medically retired medic. I have a beautiful wife of 20 years and six awesome children with our first grandchild on the way! My tattoo represents my own personal struggles, diagnosis, thoughts, experiences, friends, comrades, family and so on. We all have these experiences whether personally or by a loved one. It’s time we bring attention to those who don’t know and are unaware what their family members could be going through.'",
-    },
-    {
-      image: "/VetInk Gallery/April Greeson.jpg",
-
-      name: "April Greeson",
-      instagram: "",
-      story:
-        "'After serving in the Marine Corps, I knew I wanted a tattoo that represented me. It took 20 years to make this happen and I am super happy with the way it turned out!!!'",
-    },
-    {
-      image: "/VetInk Gallery/Jeremiah 1.jpg",
-
-      name: "Jeremiah",
-      instagram: "@amped2bfit",
-      story:
-        "'This is for all that gave ALL. The dog tags are my grandfather’s who was a fighter pilot in the Marines. God bless the USA'",
-    },
-    {
-      image: "/VetInk Gallery/Dennis Ashby.jpg",
-
-      name: "Dennis Ashby",
-      instagram: "",
-      story:
-        "Dennis is a Navy veteran who served for 10 years. He says his entire right arm is patriotic. He's also in a veteran motorcycle club and loves helping veterans in need.",
-    },
-    {
-      image: "/VetInk Gallery/Justin Shelhammer.jpg",
-
-      name: "Justin Shelhammer",
-      instagram: "",
-      story:
-        "'I was stationed at ft Campbell 2000-2005 and I stepped on a land mine while deployed ... and got medically retired but my love for the military is still there.'",
-    },
-    {
-      image: "/VetInk Gallery/Ryan Clark.jpg",
-
-      name: "Ryan Clark",
-      instagram: "",
-      story:
-        "Ryan, a U.S. Navy Veteran says he got this piece to reflect on his time enlisted as a Gunner's Mate and his time as an Officer. He used the Officer crest and replaced the anchors with cross cannons. The blue accent is a tribute to his time at sea.",
-    },
-    {
-      image: "/VetInk Gallery/William Freeman.jpg",
-
-      name: "William Freeman",
-      instagram: "",
-      story:
-        "William served from 1992-1996. 63T with Recovery Specialist. He did all his training at Fort Knox, then Germany and finished at Fort Irwin. He says he comes from a very proud military family. He even has relatives who have served since the Colonial days.",
-    },
-    {
-      image: "/VetInk Gallery/Kenny Mushrush.jpg",
-
-      name: "USMC Veteran Kenny Mushrush",
-      instagram: "",
-      story:
-        "'Saw this kind of tattoo in 2013 thought it was awesome, showed it to a friend of mine. He gets the tattoo that night in 2018, just passed 2 years that he has been gone. Cancer sucks!!!! Christmas 2019 went and got it done as a tribute.'",
-    },
-    {
-      image: "/VetInk Gallery/Amy Shackles.jpg",
-
-      name: "Amy Shackles",
-      instagram: "",
-      story:
-        "'My Dad was in the Air Force. I got my tattoo for him, a month before he passed away. He never really liked that I had tattoos but he said this one was really cool and he loved it. I am very passionate about Veterans, they deserve the utmost respect and gratitude. I thank all Veterans for their service to our country.'",
-    },
-    {
-      image: "/VetInk Gallery/Robert Price.jpg",
-
-      name: "Robert Price",
-      instagram: "",
-      story:
-        "Robert says this ink started off with the chemical corp emblem his MOS 54B and the patch he wore while stationed with a svc battery for the 2/28 fa. The rest of the back is dedicated to his family and friends who served and fought on foreign soil — Both of his Grandfathers, his father and his best friend. He says what can't be seen is that both of his ribs are covered. One with his son's unit now and the other of a WW2 soldier with the caption 'FOR GOD AND COUNTRY ILL END YOUR LIFE' ... A code he says he still lives by.'",
-    },
-    {
-      image: "/VetInk Gallery/Donald Maerker.jpg",
-
-      name: "Donald Maerker",
-      instagram: "",
-      story:
-        "Donald got this tattoo because he served as a combat medic in the Army.",
-    },
-    {
-      image: "/VetInk Gallery/John McKnight.jpg",
-
-      name: "John McKnight",
-      instagram: "@longislandjack",
-      story:
-        "'So I Served from 2011 to 2015. Basic/AIT was at Fort Leonard Wood. Then I went to Airborne school at Fort Benning. Soon after that I found myself at Fort Bragg in 'The Nasty.' Me, my wife and 6month old son moved into our new home on base August 2011. Things between me and my wife started to get really bad towards the end of 2011. By February 2012 CPS was involved because of my wife's erratic behavior and actions that put our son's life in danger multiple times. Me and my wife separated. She and our son stayed on base in our house and my Commander put my in the barracks. The day after our son turned one years old we had a court date on February 15th 2012. The judge ordered that our son be placed in foster care due to my wife's behavior. He could not give custody to me because I was staying in the barracks. For the next few months I was fighting for custody of my son. During this time I received a tremendous amount of help from my battle buddies in 'The Nasty.' I didn't even have a car because my wife had it. One of my best friends drove me to social services every Friday for my supervised visit with my son. The amount of stories and things that happened would take a long time to explain. The reason for this tattoo is because I am blessed and grateful to be a party of 'The Nasty.' So many battle buddies helped me out. In April 2012, I was able to afford my own place off base (I was no longer able to live on base because of my wife). A few weeks later I was awarded full custody of my son and my wife has not seen him since her last supervised visit March 2012. This tattoo is a constant reminder of how lucky I was to have the support of 'The Nasty.' They helped me out during the toughest moments of my life.'",
-    },
-    {
-      image: "/VetInk Gallery/Matthew Davies.jpg",
-      name: "Matthew Davies",
-      instagram: "",
-      story:
-        "Matthew got this tattoo to represent his time in the Navy. 'This piece means a lot because the navy helped me do and see things I never would have been able to by myself. This piece also has another amazing story because it was done by a Purple Heart recipient from Army/Marine Corp who helps take care of local veterans.'",
-    },
-    {
-      image: "/VetInk Gallery/Clifton Gilbert.jpg",
-
-      name: "Clifton Gilbert",
-      instagram: "",
-      story:
-        "Clifton got this tattoo when his best friend committed suicide due to everything that happened while she was overseas. 'I myself am an army veteran and want her to live on with me forever and in the hearts and minds of people that knew her and got to love her like i did. She was such an amazing person with a heart of gold.",
-    },
-    {
-      image: "/VetInk Gallery/Daniel Chavez.jpg",
-
-      name: "Daniel Chavez",
-      instagram: "",
-      story:
-        "For Daniel, the skull at the top represents the infantry soldiers who gave their lives and are looking over the living soldiers while in battle and at home, which are the soldiers at the bottom. They also represent the brotherhood created while overseas and always having each other’s back. The background is the American flag which represents what they all fight/fought for and what they hold dear to their heart. As well as being a proud American. The 'infantry' at the top just represents his job in the army and his pride for it.",
-    },
-    {
-      image: "/VetInk Gallery/Jim Fuller.jpg",
-
-      name: "Jim Fuller",
-      instagram: "",
-      story:
-        "Jim got this tattoo to represent his time in the Army and honoring those he served with and made it back home.",
-    },
-    {
-      image: "/VetInk Gallery/Matt Davies.jpg",
-
-      name: "Matt Davies",
-      instagram: "",
-      story:
-        "Matt got this as a start to a service sleeve he is currently working on. It was actually a large coverup that he wanted to do. The idea was for a sleeve, to show off various parts of the Navy that he enjoyed. He says this was just such a cool design to coverup some terrible tribal he got as a young kid. His goal is to do my military sleeve with tattoo artists who were all former service members.",
-    },
-    {
-      image: "/VetInk Gallery/Greg Dunn.jpg",
-
-      name: "Greg Dunn",
-      instagram: "",
-      story:
-        "Greg has two military tattoos that are significant to him: Tribal with Old-English writing that says 'Semper Fidelis,' which is the Marine Corps motto for 'always faithful.' and the First Marine Division Logo, with his unit designation, he went to combat with.",
-    },
-    {
-      image: "/VetInk Gallery/Zachary Sandford.jpg",
-
-      name: "Zachary Sandford",
-      instagram: "",
-      story:
-        "Zachary has a tattoo of his military working dog, Ux's paw print. They were deployed in support of OEF 13-14 with CJSOTF. While they had a successful deployment and he was credited with locating 10 IEDs, they returned and Ux passed away from cancer a few years later. Zachary plans on getting an additional tattoo with him as Cerberus guarding the gates to hell.",
-    },
-    {
-      image: "/VetInk Gallery/Rikki Miller.jpg",
-
-      name: "Rikki Miller",
-      instagram: "",
-      story:
-        "Rikki got this tattoo to represent all of the branches her family has served. 'This tattoo has a lot of value to me as all the members of my family who was in the service have all passed and crossed the bridge. I just want to say to those who have family and friends serving, cherish them, show them you care and love them, hug them even when they don't want it.'",
-    },
-  ];
-
-  let currentIndex = 0;
-
-  /* ====== ELEMENTS ====== */
-  const grid = document.getElementById("galleryGrid");
-  const modal = document.getElementById("galleryModal");
-  const mainImage = document.getElementById("mainImage");
-  const captionName = document.getElementById("captionName");
-  const captionIg = document.getElementById("captionIg");
-  const captionStory = document.getElementById("captionStory");
-  const thumbnailPanel = document.getElementById("thumbnailPanel");
-  const counter = document.querySelector(".counter");
-  counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
-  /* ====== BUILD GRID ====== */
-  galleryData.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "gallery-item";
-    div.innerHTML = `<img src="${item.image}" alt="">`;
-    div.onclick = () => openModal(index);
-    grid.appendChild(div);
-  });
-
-  /* ====== BUILD THUMBNAILS ====== */
-  galleryData.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "thumbnail";
-    div.innerHTML = `<img src="${item.image}" alt="">`;
-    div.onclick = () => showImage(index);
-    thumbnailPanel.appendChild(div);
-  });
-
-  /* ====== FUNCTIONS ====== */
-  function openModal(index) {
-    modal.classList.add("active");
-    document.body.style.overflow = "hidden";
-    showImage(index);
-    counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
-  }
-
-  function closeModal() {
-    modal.classList.remove("active");
-    thumbnailPanel.classList.remove("active");
-    document.body.style.overflow = "";
-  }
-
-  function showImage(index) {
-    currentIndex = index;
-    const item = galleryData[index];
-    mainImage.src = item.image;
-    captionName.textContent = item.name;
-    captionIg.textContent = item.instagram ? `(${item.instagram})` : "";
-    captionStory.textContent = item.story;
-  }
-
-  /* ====== CONTROLS ====== */
-  document.getElementById("prevBtn").onclick = () => {
-    showImage((currentIndex - 1 + galleryData.length) % galleryData.length);
-    counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
-  };
-
-  document.getElementById("nextBtn").onclick = () => {
-    showImage((currentIndex + 1) % galleryData.length);
-    counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
-  };
-
-  document.getElementById("closeBtn").addEventListener("click", () => {
-    closeModal();
-    resetImage();
-  });
-
-  document.getElementById("thumbToggle").onclick = () => {
-    thumbnailPanel.classList.toggle("active");
-  };
-
-  document.querySelector(".gallery-overlay").onclick = closeModal;
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeModal();
-  });
-  const zoomBtn = document.querySelector(".fa-magnifying-glass");
-
-  let isZoomed = false;
-  let isDragging = false;
-
-  let startX = 0;
-  let startY = 0;
-  let translateX = 0;
-  let translateY = 0;
-
-  const ZOOM_SCALE = 2;
-  const MOVEMENT_SENSITIVITY = 1.5; // Increase for more sensitive movement
-
-  /* ======================
- ZOOM TOGGLE
-====================== */
-  zoomBtn.addEventListener("click", () => {
-    if (isZoomed) {
-      resetImage();
-    } else {
-      isZoomed = true;
-      applyTransform();
-    }
-  });
-
-  /* ======================
- POINTER DOWN
-====================== */
-  mainImage.addEventListener("pointerdown", (e) => {
-    if (!isZoomed) return;
-
-    isDragging = true;
-    mainImage.setPointerCapture(e.pointerId);
-
-    startX = e.clientX - translateX;
-    startY = e.clientY - translateY;
-
-    mainImage.classList.add("grabbing");
-    e.preventDefault(); // Prevent default behavior
-  });
-
-  mainImage.addEventListener("pointermove", (e) => {
-    if (!isDragging || !isZoomed) return;
-
-    translateX = (e.clientX - startX) * MOVEMENT_SENSITIVITY;
-    translateY = (e.clientY - startY) * MOVEMENT_SENSITIVITY;
-
-    applyTransform();
-    e.preventDefault(); // Prevent default behavior
-  });
-
-  function stopDragging(e) {
-    if (!isDragging) return; // Only stop if actually dragging
-
-    isDragging = false;
-    mainImage.classList.remove("grabbing");
-
-    if (e?.pointerId !== undefined) {
-      mainImage.releasePointerCapture(e.pointerId);
-    }
-  }
-
-  mainImage.addEventListener("pointerup", stopDragging);
-  mainImage.addEventListener("pointercancel", stopDragging);
-  // Removed pointerleave - now only stops on pointerup/cancel
-  window.addEventListener("blur", stopDragging);
-
-  function applyTransform() {
-    mainImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${ZOOM_SCALE})`;
-  }
-
-  function resetImage() {
-    isZoomed = false;
-    isDragging = false;
-
-    translateX = 0;
-    translateY = 0;
-
-    mainImage.classList.remove("grabbing");
-    mainImage.style.transition = "transform 0.3s ease";
-    mainImage.style.transform = "translate(0, 0) scale(1)";
-
-    setTimeout(() => {
-      mainImage.style.transition = "";
-    }, 300);
-  }
-
-  // Assuming these exist in your DOM
-  const playBtn = document.querySelector(".fa-play");
-  const pauseBtn = document.querySelector(".fa-pause");
-  const timerBar = document.querySelector(".timer");
-
-  let slideshowInterval = null;
-  let timerInterval = null;
-  const duration = 3000; // 3 seconds
-
-  // Show image function
-  function showImage(index) {
-    currentIndex = index % galleryData.length; // loop around
-    const item = galleryData[currentIndex];
-    mainImage.src = item.image;
-    captionName.textContent = item.name;
-    captionIg.textContent = item.instagram ? `(${item.instagram})` : "";
-    captionStory.textContent = item.story;
-  }
-
-  // Start slideshow
-  function startSlideshow() {
-    playBtn.style.display = "none";
-    pauseBtn.style.display = "block";
-
-    let timerWidth = 0;
-    const step = 100 / (duration / 30); // increment per 30ms
-
-    timerInterval = setInterval(() => {
-      timerWidth += step;
-      if (timerWidth > 100) timerWidth = 100;
-      timerBar.style.width = `${timerWidth}%`;
-    }, 30);
-
-    slideshowInterval = setInterval(() => {
-      currentIndex = (currentIndex + 1) % galleryData.length;
+    <script>
+      const galleryData = [
+        {
+          image: "/VetInk Gallery/Lane Harris 1.jpg",
+
+          name: "Lane Harris 1",
+          instagram: "",
+          story:
+            "Lane says this is a tattoo that was created for remembrance of those who he's served with and have fallen both inside and outside of the military, specifically a gentleman named lane Harris, for the battle cross.",
+        },
+        {
+          image: "/VetInk Gallery/Lane Harris 2.jpg",
+
+          name: "Lane Harris 2",
+          instagram: "",
+          story:
+            "Lane says 'the eagles head is to resemble a multitude of things, from staying sharp, to patriotic, to majestic. The uncle Sam’s skull is in reference to dying for what America stands for in the traditional sense. Freedom from government and being free people. Then design around the eagles head is more or less a design feature to tie them all together.'",
+        },
+        {
+          image: "/VetInk Gallery/Lane Harris 3.jpg",
+
+          name: "Lane Harris 3",
+          instagram: "",
+          story:
+            "'I got my Eagle Globe and Anchor tattoo to remind me of my pride and the accomplishment from the first time I put on that uniform until I die. It’s an honor and a privilege to be a Marine! I cherish the brotherhood wherever I go and it’s a special moment to run into another Marine that you never met before and when they see this tattoo we instantly know we are brothers because we are cut from the same blood oath that brings us all altogether. SFMF’s'",
+        },
+        {
+          image: "/VetInk Gallery/Justin Brant.jpg",
+
+          name: "Justin Brant",
+          instagram: "@jab_trd_socal",
+          story:
+            "Justin Brant says after joining the Marines back in 2001, he got his first tattoo in MOS school. He says it was cool as a young one…but he didn’t really like it and after a few years he ended up covering it up. A few year later he had some laser tattoo removal sessions to lighten the double tattoo. In the meantime, him and San Diego tattoo artist (IG: @terryribera) sat down and planned the tattoo out. 'He actually texted me a few weeks later before the first appointment and had changed the design to something more in your face and dynamic. I was in love with the design! At this point in my career I had been on 7 deployments and seen over 30 countries with just about 16-17 years in service. 3 sessions later I was so proud to wear this new ink from Terry that represents who I am. I fully believe that even long after the military I’ll still be a Marine and hold that true.”",
+        },
+        {
+          image: "/VetInk Gallery/Casey Wieckowski.jpg",
+
+          name: "Casey Wieckowski",
+          instagram: "@afflfdvictoryvhcfitec2309",
+          story:
+            "Casey says he got the the flag as a back drop because he loves this country and is proud to have served. The Statue of Liberty with a have skull face is for liberty or death. The soldiers grave is for all his fallen brothers and sisters, and Saint Michael the protector because he is the patron saint of the Air Force and first responders, 'me being a former Air Force firefighter. I also have we the people on this arm, 3 percenter, firefighter cross, Spartan helmet, and come take them in Greek.'",
+        },
+        {
+          image: "/VetInk Gallery/Jordan Leitsch.jpg",
+
+          name: "Jordan Leitsch",
+          instagram: "@onelegwonder0311",
+          story:
+            "Jordan, a USMC Veteran, says he got the American flag sleeve a few weeks after he found out he would be losing his leg from his in-service injuries. He says it was a way to motivate himself and keep pushing forward.",
+        },
+        {
+          image: "/VetInk Gallery/Chris 2.jpg",
+
+          name: "Chris",
+          instagram: "",
+          story:
+            "'I am a 100% SC medically retired medic. I have a beautiful wife of 20 years and six awesome children with our first grandchild on the way! My tattoo represents my own personal struggles, diagnosis, thoughts, experiences, friends, comrades, family and so on. We all have these experiences whether personally or by a loved one. It’s time we bring attention to those who don’t know and are unaware what their family members could be going through.'",
+        },
+        {
+          image: "/VetInk Gallery/April Greeson.jpg",
+
+          name: "April Greeson",
+          instagram: "",
+          story:
+            "'After serving in the Marine Corps, I knew I wanted a tattoo that represented me. It took 20 years to make this happen and I am super happy with the way it turned out!!!'",
+        },
+        {
+          image: "/VetInk Gallery/Jeremiah 1.jpg",
+
+          name: "Jeremiah",
+          instagram: "@amped2bfit",
+          story:
+            "'This is for all that gave ALL. The dog tags are my grandfather’s who was a fighter pilot in the Marines. God bless the USA'",
+        },
+        {
+          image: "/VetInk Gallery/Dennis Ashby.jpg",
+
+          name: "Dennis Ashby",
+          instagram: "",
+          story:
+            "Dennis is a Navy veteran who served for 10 years. He says his entire right arm is patriotic. He's also in a veteran motorcycle club and loves helping veterans in need.",
+        },
+        {
+          image: "/VetInk Gallery/Justin Shelhammer.jpg",
+
+          name: "Justin Shelhammer",
+          instagram: "",
+          story:
+            "'I was stationed at ft Campbell 2000-2005 and I stepped on a land mine while deployed ... and got medically retired but my love for the military is still there.'",
+        },
+        {
+          image: "/VetInk Gallery/Ryan Clark.jpg",
+
+          name: "Ryan Clark",
+          instagram: "",
+          story:
+            "Ryan, a U.S. Navy Veteran says he got this piece to reflect on his time enlisted as a Gunner's Mate and his time as an Officer. He used the Officer crest and replaced the anchors with cross cannons. The blue accent is a tribute to his time at sea.",
+        },
+        {
+          image: "/VetInk Gallery/William Freeman.jpg",
+
+          name: "William Freeman",
+          instagram: "",
+          story:
+            "William served from 1992-1996. 63T with Recovery Specialist. He did all his training at Fort Knox, then Germany and finished at Fort Irwin. He says he comes from a very proud military family. He even has relatives who have served since the Colonial days.",
+        },
+        {
+          image: "/VetInk Gallery/Kenny Mushrush.jpg",
+
+          name: "USMC Veteran Kenny Mushrush",
+          instagram: "",
+          story:
+            "'Saw this kind of tattoo in 2013 thought it was awesome, showed it to a friend of mine. He gets the tattoo that night in 2018, just passed 2 years that he has been gone. Cancer sucks!!!! Christmas 2019 went and got it done as a tribute.'",
+        },
+        {
+          image: "/VetInk Gallery/Amy Shackles.jpg",
+
+          name: "Amy Shackles",
+          instagram: "",
+          story:
+            "'My Dad was in the Air Force. I got my tattoo for him, a month before he passed away. He never really liked that I had tattoos but he said this one was really cool and he loved it. I am very passionate about Veterans, they deserve the utmost respect and gratitude. I thank all Veterans for their service to our country.'",
+        },
+        {
+          image: "/VetInk Gallery/Robert Price.jpg",
+
+          name: "Robert Price",
+          instagram: "",
+          story:
+            "Robert says this ink started off with the chemical corp emblem his MOS 54B and the patch he wore while stationed with a svc battery for the 2/28 fa. The rest of the back is dedicated to his family and friends who served and fought on foreign soil — Both of his Grandfathers, his father and his best friend. He says what can't be seen is that both of his ribs are covered. One with his son's unit now and the other of a WW2 soldier with the caption 'FOR GOD AND COUNTRY ILL END YOUR LIFE' ... A code he says he still lives by.'",
+        },
+        {
+          image: "/VetInk Gallery/Donald Maerker.jpg",
+
+          name: "Donald Maerker",
+          instagram: "",
+          story:
+            "Donald got this tattoo because he served as a combat medic in the Army.",
+        },
+        {
+          image: "/VetInk Gallery/John McKnight.jpg",
+
+          name: "John McKnight",
+          instagram: "@longislandjack",
+          story:
+            "'So I Served from 2011 to 2015. Basic/AIT was at Fort Leonard Wood. Then I went to Airborne school at Fort Benning. Soon after that I found myself at Fort Bragg in 'The Nasty.' Me, my wife and 6month old son moved into our new home on base August 2011. Things between me and my wife started to get really bad towards the end of 2011. By February 2012 CPS was involved because of my wife's erratic behavior and actions that put our son's life in danger multiple times. Me and my wife separated. She and our son stayed on base in our house and my Commander put my in the barracks. The day after our son turned one years old we had a court date on February 15th 2012. The judge ordered that our son be placed in foster care due to my wife's behavior. He could not give custody to me because I was staying in the barracks. For the next few months I was fighting for custody of my son. During this time I received a tremendous amount of help from my battle buddies in 'The Nasty.' I didn't even have a car because my wife had it. One of my best friends drove me to social services every Friday for my supervised visit with my son. The amount of stories and things that happened would take a long time to explain. The reason for this tattoo is because I am blessed and grateful to be a party of 'The Nasty.' So many battle buddies helped me out. In April 2012, I was able to afford my own place off base (I was no longer able to live on base because of my wife). A few weeks later I was awarded full custody of my son and my wife has not seen him since her last supervised visit March 2012. This tattoo is a constant reminder of how lucky I was to have the support of 'The Nasty.' They helped me out during the toughest moments of my life.'",
+        },
+        {
+          image: "/VetInk Gallery/Matthew Davies.jpg",
+          name: "Matthew Davies",
+          instagram: "",
+          story:
+            "Matthew got this tattoo to represent his time in the Navy. 'This piece means a lot because the navy helped me do and see things I never would have been able to by myself. This piece also has another amazing story because it was done by a Purple Heart recipient from Army/Marine Corp who helps take care of local veterans.'",
+        },
+        {
+          image: "/VetInk Gallery/Clifton Gilbert.jpg",
+
+          name: "Clifton Gilbert",
+          instagram: "",
+          story:
+            "Clifton got this tattoo when his best friend committed suicide due to everything that happened while she was overseas. 'I myself am an army veteran and want her to live on with me forever and in the hearts and minds of people that knew her and got to love her like i did. She was such an amazing person with a heart of gold.",
+        },
+        {
+          image: "/VetInk Gallery/Daniel Chavez.jpg",
+
+          name: "Daniel Chavez",
+          instagram: "",
+          story:
+            "For Daniel, the skull at the top represents the infantry soldiers who gave their lives and are looking over the living soldiers while in battle and at home, which are the soldiers at the bottom. They also represent the brotherhood created while overseas and always having each other’s back. The background is the American flag which represents what they all fight/fought for and what they hold dear to their heart. As well as being a proud American. The 'infantry' at the top just represents his job in the army and his pride for it.",
+        },
+        {
+          image: "/VetInk Gallery/Jim Fuller.jpg",
+
+          name: "Jim Fuller",
+          instagram: "",
+          story:
+            "Jim got this tattoo to represent his time in the Army and honoring those he served with and made it back home.",
+        },
+        {
+          image: "/VetInk Gallery/Matt Davies.jpg",
+
+          name: "Matt Davies",
+          instagram: "",
+          story:
+            "Matt got this as a start to a service sleeve he is currently working on. It was actually a large coverup that he wanted to do. The idea was for a sleeve, to show off various parts of the Navy that he enjoyed. He says this was just such a cool design to coverup some terrible tribal he got as a young kid. His goal is to do my military sleeve with tattoo artists who were all former service members.",
+        },
+        {
+          image: "/VetInk Gallery/Greg Dunn.jpg",
+
+          name: "Greg Dunn",
+          instagram: "",
+          story:
+            "Greg has two military tattoos that are significant to him: Tribal with Old-English writing that says 'Semper Fidelis,' which is the Marine Corps motto for 'always faithful.' and the First Marine Division Logo, with his unit designation, he went to combat with.",
+        },
+        {
+          image: "/VetInk Gallery/Zachary Sandford.jpg",
+
+          name: "Zachary Sandford",
+          instagram: "",
+          story:
+            "Zachary has a tattoo of his military working dog, Ux's paw print. They were deployed in support of OEF 13-14 with CJSOTF. While they had a successful deployment and he was credited with locating 10 IEDs, they returned and Ux passed away from cancer a few years later. Zachary plans on getting an additional tattoo with him as Cerberus guarding the gates to hell.",
+        },
+        {
+          image: "/VetInk Gallery/Rikki Miller.jpg",
+
+          name: "Rikki Miller",
+          instagram: "",
+          story:
+            "Rikki got this tattoo to represent all of the branches her family has served. 'This tattoo has a lot of value to me as all the members of my family who was in the service have all passed and crossed the bridge. I just want to say to those who have family and friends serving, cherish them, show them you care and love them, hug them even when they don't want it.'",
+        },
+      ];
+
+      let currentIndex = 0;
+
+      const grid = document.getElementById("galleryGrid");
+      const modal = document.getElementById("galleryModal");
+      const mainImage = document.getElementById("mainImage");
+      const captionName = document.getElementById("captionName");
+      const captionIg = document.getElementById("captionIg");
+      const captionStory = document.getElementById("captionStory");
+      const captionNameDesktop = document.getElementById("captionNameDesktop");
+      const captionIgDesktop = document.getElementById("captionIgDesktop");
+      const captionStoryDesktop = document.getElementById(
+        "captionStoryDesktop",
+      );
+      const thumbnailPanel = document.getElementById("thumbnailPanel");
+      const counter = document.querySelector(".counter");
+      counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
+      galleryData.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "gallery-item";
+        div.innerHTML = `<img src="${item.image}" alt="">`;
+        div.onclick = () => openModal(index);
+        grid.appendChild(div);
+      });
+
+      galleryData.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "thumbnail";
+        div.innerHTML = `<img src="${item.image}" alt="">`;
+        div.onclick = () => showImage(index);
+        thumbnailPanel.appendChild(div);
+      });
+
+      function openModal(index) {
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+        showImage(index);
+        counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
+      }
+
+      function closeModal() {
+        modal.classList.remove("active");
+        thumbnailPanel.classList.remove("active");
+        document.body.style.overflow = "";
+      }
+
+      document.getElementById("prevBtn").onclick = () => {
+        showImage((currentIndex - 1 + galleryData.length) % galleryData.length);
+        counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
+        if (isZoomed) {
+          resetImage();
+        }
+      };
+
+      document.getElementById("nextBtn").onclick = () => {
+        showImage((currentIndex + 1) % galleryData.length);
+        counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
+        if (isZoomed) {
+          resetImage();
+        }
+      };
+
+      document.getElementById("closeBtn").addEventListener("click", () => {
+        closeModal();
+        resetImage();
+      });
+
+      document.getElementById("thumbToggle").onclick = () => {
+        thumbnailPanel.classList.toggle("active");
+      };
+
+      document.querySelector(".gallery-overlay").onclick = closeModal;
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+      const zoomBtn = document.querySelector(".fa-magnifying-glass");
+
+      let isZoomed = false;
+      let isDragging = false;
+
+      let startX = 0;
+      let startY = 0;
+      let translateX = 0;
+      let translateY = 0;
+
+      const ZOOM_SCALE = 2;
+      const MOVEMENT_SENSITIVITY = 1.5;
+
+      zoomBtn.addEventListener("click", () => {
+        if (isZoomed) {
+          resetImage();
+        } else {
+          isZoomed = true;
+          applyTransform();
+        }
+      });
+
+      mainImage.addEventListener("pointerdown", (e) => {
+        if (!isZoomed) return;
+
+        isDragging = true;
+        mainImage.setPointerCapture(e.pointerId);
+
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+
+        mainImage.classList.add("grabbing");
+        e.preventDefault();
+      });
+
+      mainImage.addEventListener("pointermove", (e) => {
+        if (!isDragging || !isZoomed) return;
+
+        translateX = (e.clientX - startX) * MOVEMENT_SENSITIVITY;
+        translateY = (e.clientY - startY) * MOVEMENT_SENSITIVITY;
+
+        applyTransform();
+        e.preventDefault();
+      });
+
+      function stopDragging(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        mainImage.classList.remove("grabbing");
+
+        if (e?.pointerId !== undefined) {
+          mainImage.releasePointerCapture(e.pointerId);
+        }
+      }
+
+      mainImage.addEventListener("pointerup", stopDragging);
+      mainImage.addEventListener("pointercancel", stopDragging);
+      window.addEventListener("blur", stopDragging);
+
+      function applyTransform() {
+        mainImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${ZOOM_SCALE})`;
+        mainImage.style.height = `${window.innerHeight * 0.8}px`;
+        mainImage.style.zIndex = 90;
+      }
+
+      function resetImage() {
+        isZoomed = false;
+        isDragging = false;
+
+        translateX = 0;
+        translateY = 0;
+
+        mainImage.classList.remove("grabbing");
+        mainImage.style.transition = "transform 0.3s ease";
+        mainImage.style.transform = "translate(0, 0) scale(1)";
+        mainImage.style.zIndex = 0;
+        adjustImageHeight();
+
+        setTimeout(() => {
+          mainImage.style.transition = "";
+        }, 300);
+      }
+
+      const playBtn = document.querySelector(".fa-play");
+      const pauseBtn = document.querySelector(".fa-pause");
+      const timerBar = document.querySelector(".timer");
+
+      let slideshowInterval = null;
+      let timerInterval = null;
+      const duration = 3000;
+
+      function showImage(index) {
+        if (!galleryData || !galleryData.length) return;
+
+        currentIndex =
+          ((index % galleryData.length) + galleryData.length) %
+          galleryData.length;
+
+        const item = galleryData[currentIndex];
+
+        mainImage.src = item.image;
+
+        if (window.innerWidth >= 768) {
+          captionNameDesktop.textContent = item.name;
+          captionIgDesktop.textContent = item.instagram
+            ? `(${item.instagram})`
+            : "";
+          captionStoryDesktop.textContent = item.story;
+          adjustImageHeight();
+        } else {
+          captionName.textContent = item.name;
+          captionIg.textContent = item.instagram ? `(${item.instagram})` : "";
+          captionStory.textContent = item.story;
+
+          mainImage.style.height = `${window.innerHeight * 0.8}px`;
+        }
+      }
+
+      function adjustImageHeight() {
+        const lineHeight =
+          parseInt(getComputedStyle(captionStoryDesktop).lineHeight, 10) || 20;
+        const lines = Math.ceil(captionStoryDesktop.scrollHeight / lineHeight);
+
+        const extraPerLine = 20;
+        mainImage.style.height = `${window.innerHeight * 0.8 - (lines - 1) * extraPerLine}px`;
+        console.log(lines);
+      }
+
+      function startSlideshow() {
+        playBtn.style.display = "none";
+        pauseBtn.style.display = "block";
+
+        let timerWidth = 0;
+        const step = 100 / (duration / 30);
+
+        timerInterval = setInterval(() => {
+          timerWidth += step;
+          if (timerWidth > 100) timerWidth = 100;
+          timerBar.style.width = `${timerWidth}%`;
+        }, 30);
+
+        slideshowInterval = setInterval(() => {
+          currentIndex = (currentIndex + 1) % galleryData.length;
+          showImage(currentIndex);
+          timerWidth = 0;
+        }, duration);
+      }
+
+      function stopSlideshow() {
+        playBtn.style.display = "block";
+        pauseBtn.style.display = "none";
+        clearInterval(slideshowInterval);
+        clearInterval(timerInterval);
+        timerBar.style.width = "0%";
+      }
+
+      playBtn.addEventListener("click", () => {
+        startSlideshow();
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        stopSlideshow();
+      });
+
+      [
+        ".fa-magnifying-glass",
+        "#thumbToggle",
+        "#closeBtn",
+        ".fa-arrow-right",
+        ".fa-arrow-left",
+      ].forEach((selector) => {
+        const el = document.querySelector(selector);
+        if (el) {
+          el.addEventListener("click", stopSlideshow);
+        }
+      });
+
       showImage(currentIndex);
-      timerWidth = 0; // reset timer bar
-    }, duration);
-  }
-
-  // Stop slideshow
-  function stopSlideshow() {
-    playBtn.style.display = "block";
-    pauseBtn.style.display = "none";
-    clearInterval(slideshowInterval);
-    clearInterval(timerInterval);
-    timerBar.style.width = "0%";
-  }
-
-  // Play button click
-  playBtn.addEventListener("click", () => {
-    startSlideshow();
-  });
-
-  // Pause button click
-  pauseBtn.addEventListener("click", () => {
-    stopSlideshow();
-  });
-
-  // Stop if certain elements clicked
-  [".fa-magnifying-glass", "#thumbToggle", "#closeBtn"].forEach((selector) => {
-    const el = document.querySelector(selector);
-    if (el) {
-      el.addEventListener("click", stopSlideshow);
-    }
-  });
-
-  // Initialize first image
-  showImage(currentIndex);
-</script>
+    </script>
+  </body>
+</html>
