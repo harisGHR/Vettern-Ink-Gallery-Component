@@ -1,5 +1,4 @@
 <style>
-  /* ====== GALLERY GRID ====== */
   @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css");
   @import url("https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&display=swap");
 
@@ -11,7 +10,14 @@
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 16px;
   }
-
+  .timer {
+    height: 2px;
+    background: red;
+    width: 0%;
+  }
+  .fa-pause {
+    display: none;
+  }
   .gallery-item {
     cursor: pointer;
     overflow: hidden;
@@ -50,23 +56,23 @@
   .right-controls {
     display: flex;
     background: rgba(30, 30, 30, 0.6);
-    gap: 30px;
-    padding: 20px;
+    gap: 20px;
+    padding: 10px;
   }
   .right-controls i {
-    font-size: 20px;
+    font-size: 16px;
     cursor: pointer;
   }
   #thumbToggle {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
+    gap: 1px;
     cursor: pointer;
   }
   #thumbToggle > div {
-    width: 5px;
-    height: 5px;
-    background: white;
+    width: 4px;
+    height: 4px;
+    background: #eee;
   }
   .gallery-modal.active {
     display: flex;
@@ -75,7 +81,7 @@
   .gallery-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.8);
   }
 
   /* ====== MODAL CONTENT ====== */
@@ -90,7 +96,10 @@
 
   .control-bar {
     display: flex;
+    align-items: center;
+    width: 100%;
     justify-content: space-between;
+    z-index: 99999;
   }
 
   .main-image-wrapper {
@@ -101,10 +110,22 @@
     width: 100%;
   }
 
+  .main-image.zoomed {
+    transform: scale(2); /* adjust zoom level here */
+  }
+  .main-image.grabbing {
+    cursor: grabbing;
+  }
+  .main-image:hover {
+    cursor: grab;
+  }
+
   .main-image {
     max-height: 90vh;
     object-fit: contain;
     width: 100%;
+    transition: transform 0.25s ease;
+    touch-action: none;
   }
 
   /* ====== CAPTION ====== */
@@ -147,9 +168,9 @@
     background: rgba(0, 0, 0, 0.6);
     border: none;
     color: #fff;
-    font-size: 24px;
+    font-size: 16px;
     cursor: pointer;
-    padding: 12px;
+    padding: 6px;
   }
 
   .prev {
@@ -167,15 +188,35 @@
 
   /* ====== THUMBNAILS ====== */
   .thumbnail-panel {
-    height: 100vh;
+    max-height: 100vh;
     min-width: 208px;
     gap: 2px;
-    background: #000;
+    background: rgb(0, 0, 0, 0.3);
     overflow-y: auto;
-    padding: 2px;
     display: none;
     z-index: 10000;
     grid-template-columns: repeat(2, 1fr);
+    overflow-x: hidden;
+    padding: 2px 2px 20px;
+  }
+
+  .thumbnail-panel::-webkit-scrollbar {
+    width: 8px; /* vertical */
+    height: 8px; /* horizontal */
+  }
+
+  .thumbnail-panel::-webkit-scrollbar-track {
+    background: black;
+    border-radius: 10px;
+  }
+
+  .thumbnail-panel::-webkit-scrollbar-thumb {
+    background: grey;
+    border-radius: 10px;
+  }
+
+  .thumbnail-panel::-webkit-scrollbar-thumb:hover {
+    background: rgb(55, 54, 54);
   }
 
   .thumbnail-panel.active {
@@ -210,10 +251,13 @@
   <div class="gallery-overlay"></div>
 
   <div class="modal-content">
+    <div class="timer"></div>
     <div class="control-bar">
       <div class="counter"></div>
       <div class="right-controls">
         <i class="fa-solid fa-magnifying-glass"></i>
+        <i class="fa-solid fa-play"></i>
+        <i class="fa-solid fa-pause"></i>
         <i class="fa-solid fa-x" id="closeBtn"></i>
         <div id="thumbToggle">
           <div></div>
@@ -229,9 +273,13 @@
       </div>
     </div>
     <div class="main-image-wrapper">
-      <button class="control prev" id="prevBtn">←</button>
+      <button class="control prev" id="prevBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
       <img class="main-image" id="mainImage" src="" alt="" />
-      <button class="control next" id="nextBtn">→</button>
+      <button class="control next" id="nextBtn">
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
     </div>
 
     <div class="caption">
@@ -246,8 +294,6 @@
 </div>
 
 <script>
-  /* ====== DUMMY DATA ====== */
-  /* Leave image + thumb src EMPTY intentionally */
   const galleryData = [
     {
       image: "/VetInk Gallery/Lane Harris 1.jpg",
@@ -522,7 +568,10 @@
     counter.textContent = `${currentIndex + 1} / ${galleryData.length}`;
   };
 
-  document.getElementById("closeBtn").onclick = closeModal;
+  document.getElementById("closeBtn").addEventListener("click", () => {
+    closeModal();
+    resetImage();
+  });
 
   document.getElementById("thumbToggle").onclick = () => {
     thumbnailPanel.classList.toggle("active");
@@ -533,4 +582,160 @@
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
   });
+  const zoomBtn = document.querySelector(".fa-magnifying-glass");
+
+  let isZoomed = false;
+  let isDragging = false;
+
+  let startX = 0;
+  let startY = 0;
+  let translateX = 0;
+  let translateY = 0;
+
+  const ZOOM_SCALE = 2;
+  const MOVEMENT_SENSITIVITY = 1.5; // Increase for more sensitive movement
+
+  /* ======================
+ ZOOM TOGGLE
+====================== */
+  zoomBtn.addEventListener("click", () => {
+    if (isZoomed) {
+      resetImage();
+    } else {
+      isZoomed = true;
+      applyTransform();
+    }
+  });
+
+  /* ======================
+ POINTER DOWN
+====================== */
+  mainImage.addEventListener("pointerdown", (e) => {
+    if (!isZoomed) return;
+
+    isDragging = true;
+    mainImage.setPointerCapture(e.pointerId);
+
+    startX = e.clientX - translateX;
+    startY = e.clientY - translateY;
+
+    mainImage.classList.add("grabbing");
+    e.preventDefault(); // Prevent default behavior
+  });
+
+  mainImage.addEventListener("pointermove", (e) => {
+    if (!isDragging || !isZoomed) return;
+
+    translateX = (e.clientX - startX) * MOVEMENT_SENSITIVITY;
+    translateY = (e.clientY - startY) * MOVEMENT_SENSITIVITY;
+
+    applyTransform();
+    e.preventDefault(); // Prevent default behavior
+  });
+
+  function stopDragging(e) {
+    if (!isDragging) return; // Only stop if actually dragging
+
+    isDragging = false;
+    mainImage.classList.remove("grabbing");
+
+    if (e?.pointerId !== undefined) {
+      mainImage.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  mainImage.addEventListener("pointerup", stopDragging);
+  mainImage.addEventListener("pointercancel", stopDragging);
+  // Removed pointerleave - now only stops on pointerup/cancel
+  window.addEventListener("blur", stopDragging);
+
+  function applyTransform() {
+    mainImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${ZOOM_SCALE})`;
+  }
+
+  function resetImage() {
+    isZoomed = false;
+    isDragging = false;
+
+    translateX = 0;
+    translateY = 0;
+
+    mainImage.classList.remove("grabbing");
+    mainImage.style.transition = "transform 0.3s ease";
+    mainImage.style.transform = "translate(0, 0) scale(1)";
+
+    setTimeout(() => {
+      mainImage.style.transition = "";
+    }, 300);
+  }
+
+  // Assuming these exist in your DOM
+  const playBtn = document.querySelector(".fa-play");
+  const pauseBtn = document.querySelector(".fa-pause");
+  const timerBar = document.querySelector(".timer");
+
+  let slideshowInterval = null;
+  let timerInterval = null;
+  const duration = 3000; // 3 seconds
+
+  // Show image function
+  function showImage(index) {
+    currentIndex = index % galleryData.length; // loop around
+    const item = galleryData[currentIndex];
+    mainImage.src = item.image;
+    captionName.textContent = item.name;
+    captionIg.textContent = item.instagram ? `(${item.instagram})` : "";
+    captionStory.textContent = item.story;
+  }
+
+  // Start slideshow
+  function startSlideshow() {
+    playBtn.style.display = "none";
+    pauseBtn.style.display = "block";
+
+    let timerWidth = 0;
+    const step = 100 / (duration / 30); // increment per 30ms
+
+    timerInterval = setInterval(() => {
+      timerWidth += step;
+      if (timerWidth > 100) timerWidth = 100;
+      timerBar.style.width = `${timerWidth}%`;
+    }, 30);
+
+    slideshowInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % galleryData.length;
+      showImage(currentIndex);
+      timerWidth = 0; // reset timer bar
+    }, duration);
+  }
+
+  // Stop slideshow
+  function stopSlideshow() {
+    playBtn.style.display = "block";
+    pauseBtn.style.display = "none";
+    clearInterval(slideshowInterval);
+    clearInterval(timerInterval);
+    timerBar.style.width = "0%";
+  }
+
+  // Play button click
+  playBtn.addEventListener("click", () => {
+    startSlideshow();
+  });
+
+  // Pause button click
+  pauseBtn.addEventListener("click", () => {
+    stopSlideshow();
+  });
+
+  // Stop if certain elements clicked
+  [".fa-magnifying-glass", "#thumbToggle", "#closeBtn"].forEach((selector) => {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.addEventListener("click", stopSlideshow);
+    }
+  });
+
+  // Initialize first image
+  showImage(currentIndex);
 </script>
